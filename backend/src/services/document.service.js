@@ -1,4 +1,9 @@
 const documentRepository = require('../repositories/document.repository');
+const {
+  toDocumentRecord,
+  toPublicDocument,
+  toDownloadDocument,
+} = require('./document.mapper');
 
 function createServiceError(status, code, message) {
   const error = new Error(message);
@@ -7,29 +12,12 @@ function createServiceError(status, code, message) {
   return error;
 }
 
-function toPublicDocument(document) {
-  return {
-    id: document.id,
-    originalName: document.originalName,
-    size: document.size,
-    uploadedAt: document.uploadedAt,
-    owner: document.owner,
-  };
-}
-
 async function upload(file) {
   if (!file) {
     throw createServiceError(400, 'FILE_REQUIRED', 'Envie um arquivo no campo "file".');
   }
 
-  const document = {
-    id: file.id,
-    originalName: file.originalName,
-    size: file.size,
-    uploadedAt: new Date().toISOString(),
-    owner: null,
-    storagePath: file.storagePath,
-  };
+  const document = toDocumentRecord(file, new Date().toISOString());
 
   try {
     await documentRepository.save(document);
@@ -64,10 +52,7 @@ async function getDownload(id) {
     throw createServiceError(404, 'DOCUMENT_NOT_FOUND', 'Documento não encontrado.');
   }
 
-  return {
-    filePath: document.storagePath,
-    originalName: document.originalName,
-  };
+  return toDownloadDocument(document);
 }
 
 module.exports = {
